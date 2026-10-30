@@ -1,7 +1,20 @@
+const mongoose = require('mongoose');
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const Attraction = require('./models/Attraction');
+
 const app = express();
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('MongoDB connected successfully');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+  });
+
+
 
 app.use(cors());
 app.use(express.json());
@@ -12,35 +25,16 @@ app.get('/', (req, res) => {
   });
 });
 
-const attractions = [
-  {
-    id: 1,
-    name: "Sigiriya",
-    location: "Matale",
-    category: "Historical",
-    latitude: 7.9570,
-    longitude: 80.7603
-  },
-  {
-    id: 2,
-    name: "Temple of the Tooth",
-    location: "Kandy",
-    category: "Religious",
-    latitude: 7.2936,
-    longitude: 80.6413
-  },
-  {
-    id: 3,
-    name: "Galle Fort",
-    location: "Galle",
-    category: "Historical",
-    latitude: 6.0260,
-    longitude: 80.2170
-  }
-];
 
-app.get('/api/attractions', (req, res) => {
-  res.json(attractions);
+app.get('/api/attractions', async (req, res) => {
+  try {
+    const attractions = await Attraction.find();
+    res.json(attractions);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Failed to retrieve attractions'
+    });
+  }
 });
 
 const PORT = 3000;
