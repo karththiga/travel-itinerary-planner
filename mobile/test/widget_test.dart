@@ -1,30 +1,85 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:mobile/main.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:mobile/app/travel_app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Signup and login lead to home and logout returns to login', (
+    tester,
+  ) async {
+    var signedUp = false;
+    final client = MockClient((request) async {
+      switch (request.url.path) {
+        case '/api/auth/signup':
+          expect(jsonDecode(request.body), {
+            'email': 'test@example.com',
+            'password': 'a-long passphrase',
+          });
+          signedUp = true;
+          return http.Response(
+            jsonEncode({'token': 'token', 'expiresIn': 3600}),
+            201,
+          );
+        case '/api/auth/login':
+          return signedUp
+              ? http.Response(
+                  jsonEncode({'token': 'token', 'expiresIn': 3600}),
+                  200,
+                )
+              : http.Response(
+                  jsonEncode({'message': 'Invalid email or password.'}),
+                  401,
+                );
+        case '/api/auth/logout':
+          expect(request.headers['authorization'], 'Bearer token');
+          return http.Response('', 204);
+        case '/api/attractions':
+          return http.Response('[]', 200);
+        default:
+          fail('Unexpected API request: ${request.url}');
+      }
+    });
+    addTearDown(client.close);
+    await tester.pumpWidget(TravelApp(client: client));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    Future<void> enterCredentials() async {
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'a-long passphrase',
+      );
+    }
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await enterCredentials();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log in'));
+    await tester.pumpAndSettle();
+    expect(find.text('Invalid email or password.'), findsOneWidget);
+
+    await tester.tap(find.text('Sign up'));
     await tester.pump();
+    await enterCredentials();
+    await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
+    await tester.pumpAndSettle();
+    expect(find.text('No attractions found'), findsOneWidget);
+    await tester.tap(find.byTooltip('Log out'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await enterCredentials();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log in'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Plan Trip'));
+    await tester.pumpAndSettle();
+    expect(find.text('Travel Preferences'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Log out'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Log in'), findsOneWidget);
   });
 }
