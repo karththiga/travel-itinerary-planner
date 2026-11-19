@@ -9,9 +9,16 @@ const attractionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  district: {
+    type: String,
+    required: true
+  },
   category: {
     type: String,
     required: true
+  },
+  description: {
+    type: String
   },
   latitude: {
     type: Number,
@@ -20,6 +27,27 @@ const attractionSchema = new mongoose.Schema({
   longitude: {
     type: Number,
     required: true
+  },
+  openingTime: {
+    type: String
+  },
+  closingTime: {
+    type: String
+  },
+  estimatedVisitDuration: {
+    type: Number
+  },
+  entryFee: {
+    type: Number,
+    default: 0
+  },
+  environment: {
+    type: String,
+    enum: ['Indoor', 'Outdoor', 'Both']
+  },
+  popularityScore: {
+    type: Number,
+    default: 0
   }
 });
 
