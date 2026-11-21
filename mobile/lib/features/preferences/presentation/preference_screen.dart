@@ -1,341 +1,389 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/explore_lanka_theme.dart';
+import '../../attractions/data/travel_interest.dart';
+import '../data/trip_planning_repository.dart';
+
 class PreferenceScreen extends StatefulWidget {
-  const PreferenceScreen({super.key});
+  const PreferenceScreen({
+    super.key,
+    required this.onBack,
+    required this.onSubmit,
+  });
+
+  final VoidCallback onBack;
+  final ValueChanged<TripPreferences> onSubmit;
 
   @override
   State<PreferenceScreen> createState() => _PreferenceScreenState();
 }
 
 class _PreferenceScreenState extends State<PreferenceScreen> {
-  final List<String> interests = [
-    'History',
-    'Culture',
-    'Nature',
-    'Beach',
-    'Wildlife',
-    'Adventure',
-    'Food',
-    'Religious',
-  ];
+  static const _tile = Color(0xFF2F2F2F);
+  static const _outline = Color(0xFF515151);
+  static const _selected = Color(0xFFFFEFE5);
+  static const _selectedInk = Color(0xFF873511);
 
-  final Set<String> selectedInterests = {};
+  static const _interestIcons = {
+    TravelInterest.history: '🏛️',
+    TravelInterest.nature: '🌿',
+    TravelInterest.beach: '🏖️',
+    TravelInterest.wildlife: '🐘',
+    TravelInterest.culture: '🛕',
+    TravelInterest.adventure: '🥾',
+    TravelInterest.food: '🍛',
+    TravelInterest.religious: '🙏',
+  };
+  static const _groups = ['Solo', 'Couple', 'Family', 'Friends'];
+  static const _transport = ['Car', 'Public Transport', 'Motorbike', 'Walking'];
 
-  int tripDays = 1;
-
-  final TextEditingController budgetController = TextEditingController();
-
-  String? selectedGroupType;
-
-  final List<String> groupTypes = [
-    'Solo',
-    'Couple',
-    'Family',
-    'Friends',
-  ];
-
-  String? selectedTransport;
-
-  final List<String> transportOptions = [
-    'Car',
-    'Public Transport',
-    'Motorbike',
-    'Walking',
-  ];
+  final _interests = <TravelInterest>{};
+  final _budget = TextEditingController();
+  int _days = 1;
+  String? _group;
+  String? _ride;
 
   @override
   void dispose() {
-    budgetController.dispose();
+    _budget.dispose();
     super.dispose();
   }
 
-  void _generateItinerary() {
-    // Validate interests
-    if (selectedInterests.isEmpty) {
-      _showMessage('Please select at least one interest.');
+  void _submit(BuildContext context) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final input = _budget.text.trim();
+    final groupedAmount = RegExp(r'^\d{1,3}(,\d{3})+(\.\d+)?$');
+    final budget = double.tryParse(
+      groupedAmount.hasMatch(input) ? input.replaceAll(',', '') : input,
+    );
+    final error = switch ((_interests.isEmpty, budget, _group, _ride)) {
+      (true, _, _, _) => 'Choose at least one interest.',
+      (_, null, _, _) => 'Enter your total trip budget.',
+      (_, final amount?, _, _) when !amount.isFinite || amount <= 0 =>
+        'Enter a valid trip budget.',
+      (_, _, null, _) => 'Choose who is travelling.',
+      (_, _, _, null) => 'Choose how you will get around.',
+      _ => null,
+    };
+    if (error != null) {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
-    // Validate budget
-    if (budgetController.text.trim().isEmpty) {
-      _showMessage('Please enter your trip budget.');
-      return;
-    }
+    widget.onSubmit(
+      TripPreferences(
+        interests: _interests.map((interest) => interest.label).toList(),
+        tripDays: _days,
+        budget: budget!,
+        groupType: _group!,
+        transport: _ride!,
+      ),
+    );
+  }
 
-    final double? budget =
-        double.tryParse(budgetController.text.trim());
-
-    if (budget == null || budget <= 0) {
-      _showMessage('Please enter a valid budget.');
-      return;
-    }
-
-    // Validate group type
-    if (selectedGroupType == null) {
-      _showMessage('Please select who you are travelling with.');
-      return;
-    }
-
-    // Validate transport
-    if (selectedTransport == null) {
-      _showMessage('Please select your preferred transport.');
-      return;
-    }
-
-    // Show collected preference data
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Travel Preferences'),
-          content: Text(
-            'Interests: ${selectedInterests.join(', ')}\n\n'
-            'Trip Days: $tripDays\n\n'
-            'Budget: LKR ${budget.toStringAsFixed(2)}\n\n'
-            'Group Type: $selectedGroupType\n\n'
-            'Transport: $selectedTransport',
+  Widget _option({
+    required String label,
+    required bool selected,
+    required VoidCallback onPressed,
+    String? emoji,
+  }) {
+    final isTile = emoji != null;
+    return Semantics(
+      selected: selected,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: selected
+              ? _selected
+              : isTile
+              ? _tile
+              : Colors.transparent,
+          foregroundColor: selected ? _selectedInk : const Color(0xFFECECEC),
+          side: BorderSide(
+            color: selected
+                ? exploreOrange
+                : isTile
+                ? _outline
+                : Colors.transparent,
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('OK'),
-            ),
+          minimumSize: Size(0, isTile ? 74 : 48),
+          padding: EdgeInsets.symmetric(
+            horizontal: isTile ? 4 : 14,
+            vertical: 8,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: TextStyle(fontSize: isTile ? 13 : 14),
+        ),
+        child: isTile
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExcludeSemantics(
+                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(label, textAlign: TextAlign.center),
+                ],
+              )
+            : Text(label),
+      ),
+    );
+  }
+
+  Widget _interestGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 8.0;
+        final minTileWidth = MediaQuery.textScalerOf(context).scale(68);
+        final columns = ((constraints.maxWidth + gap) / (minTileWidth + gap))
+            .floor()
+            .clamp(1, 4);
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final entry in _interestIcons.entries)
+              SizedBox(
+                width: width,
+                child: _option(
+                  label: entry.key.label,
+                  emoji: entry.value,
+                  selected: _interests.contains(entry.key),
+                  onPressed: () => setState(() {
+                    if (!_interests.remove(entry.key)) {
+                      _interests.add(entry.key);
+                    }
+                  }),
+                ),
+              ),
           ],
         );
       },
     );
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+  Widget _choices(
+    List<String> choices,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final option in choices)
+          _option(
+            label: option,
+            selected: value == option,
+            onPressed: () => onChanged(value == option ? null : option),
+          ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Travel Preferences'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Tell us about your travel preferences',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Interests
-            const Text(
-              'What are you interested in?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: interests.map((interest) {
-                final bool isSelected =
-                    selectedInterests.contains(interest);
-
-                return FilterChip(
-                  label: Text(interest),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedInterests.add(interest);
-                      } else {
-                        selectedInterests.remove(interest);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Trip duration
-            const Text(
-              'How many days is your trip?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                IconButton(
-                  onPressed: tripDays > 1
-                      ? () {
-                          setState(() {
-                            tripDays--;
-                          });
-                        }
-                      : null,
-                  icon: const Icon(
-                    Icons.remove_circle_outline,
-                  ),
-                ),
-
-                Text(
-                  '$tripDays ${tripDays == 1 ? 'Day' : 'Days'}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      tripDays++;
-                    });
-                  },
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 30),
-
-            // Budget
-            const Text(
-              'What is your total trip budget?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            TextField(
-              controller: budgetController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Budget',
-                hintText: 'Example: 50000',
-                prefixText: 'LKR ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Group type
-            const Text(
-              'Who are you travelling with?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: groupTypes.map((groupType) {
-                return ChoiceChip(
-                  label: Text(groupType),
-                  selected: selectedGroupType == groupType,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedGroupType = groupType;
-                      } else {
-                        selectedGroupType = null;
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Transport
-            const Text(
-              'How do you prefer to travel?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: transportOptions.map((transport) {
-                return ChoiceChip(
-                  label: Text(transport),
-                  selected: selectedTransport == transport,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedTransport = transport;
-                      } else {
-                        selectedTransport = null;
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Generate itinerary button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _generateItinerary,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  child: Text(
-                    'Generate Itinerary',
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
-          ],
+    final theme = buildTripPlanningTheme();
+    final colors = theme.colorScheme;
+    return Theme(
+      data: theme,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: BackButton(onPressed: widget.onBack),
+          title: const Text(
+            'Plan Your Trip',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: Builder(
+              builder: (context) {
+                final textTheme = Theme.of(context).textTheme;
+                return ListView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  children: [
+                    Semantics(
+                      label: 'Trip planning, preferences step',
+                      child: const Row(
+                        children: [
+                          _ProgressSegment(exploreOrange),
+                          SizedBox(width: 5),
+                          _ProgressSegment(Color(0xFF262626)),
+                          SizedBox(width: 5),
+                          _ProgressSegment(Color(0xFF262626)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      "Let's personalize your journey",
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Tell us what you love, and we'll create your Sri Lankan adventure.",
+                      style: TextStyle(color: colors.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 20),
+                    _PlanSection(
+                      title: 'What interests you?',
+                      child: _interestGrid(),
+                    ),
+                    _PlanSection(
+                      title: 'How many days?',
+                      child: Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Remove a day',
+                            onPressed: _days > 1
+                                ? () => setState(() => _days--)
+                                : null,
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Expanded(
+                            child: Text(
+                              '$_days ${_days == 1 ? 'Day' : 'Days'}',
+                              textAlign: TextAlign.center,
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Add a day',
+                            color: exploreOrange,
+                            onPressed: () => setState(() => _days++),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _PlanSection(
+                      title: "What's your total budget? (LKR)",
+                      child: Semantics(
+                        label: 'Total budget in Sri Lankan rupees',
+                        child: TextField(
+                          controller: _budget,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            prefixText: 'Rs. ',
+                            hintText: '15,000',
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: _outline),
+                            ),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: exploreOrange,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _PlanSection(
+                      title: 'Who are you travelling with?',
+                      child: _choices(
+                        _groups,
+                        _group,
+                        (value) => setState(() => _group = value),
+                      ),
+                    ),
+                    _PlanSection(
+                      title: 'Preferred transport',
+                      child: _choices(
+                        _transport,
+                        _ride,
+                        (value) => setState(() => _ride = value),
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () => _submit(context),
+                      iconAlignment: IconAlignment.end,
+                      icon: const Icon(Icons.arrow_forward, size: 20),
+                      label: const Text('Find recommendations'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(54),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressSegment extends StatelessWidget {
+  const _ProgressSegment(this.color);
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(3),
+        ),
+        child: const SizedBox(height: 5),
+      ),
+    );
+  }
+}
+
+class _PlanSection extends StatelessWidget {
+  const _PlanSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
       ),
     );
   }

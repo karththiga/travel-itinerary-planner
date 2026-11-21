@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Nallur Kandaswamy Temple",
+    "aliases": ["Nallur Temple", "Nallur Kandaswamy Kovil", "Nallur Kovil"],
+    "location": "Nallur",
+    "district": "Jaffna",
+    "category": "Religious • Culture",
+    "description": "A Hindu temple in Nallur dedicated to Lord Murugan.",
+    "latitude": 9.6745,
+    "longitude": 80.0293
+  },
+  {
+    "name": "Koneswaram Temple",
+    "aliases": ["Koneswaram Kovil", "Konesvaram Temple", "Thirukoneswaram"],
+    "location": "Trincomalee",
+    "district": "Trincomalee",
+    "category": "Religious • History",
+    "description": "A Hindu temple dedicated to Lord Shiva on a headland overlooking the sea in Trincomalee.",
+    "latitude": 8.5825,
+    "longitude": 81.2456
+  },
+  {
+    "name": "Arugam Bay Beach",
+    "aliases": ["Arugambay Beach", "Arugam Bay"],
+    "location": "Arugam Bay",
+    "district": "Ampara",
+    "category": "Beach • Adventure",
+    "description": "A beach on Sri Lanka’s east coast near Pottuvil, known for surfing.",
+    "latitude": 6.8404,
+    "longitude": 81.8353
+  },
+  {
+    "name": "Kankesanthurai Beach",
+    "aliases": ["KKS Beach", "Kankesanturai Beach", "Kankesanthurai"],
+    "location": "Kankesanthurai",
+    "district": "Jaffna",
+    "category": "Beach",
+    "description": "A sandy stretch of coast by the port town of Kankesanthurai, commonly called KKS.",
+    "latitude": 9.8161,
+    "longitude": 80.0482
+  },
+  {
+    "name": "Delft Island",
+    "aliases": ["Delft", "Neduntivu", "Nedunthivu"],
+    "location": "Palk Strait",
+    "district": "Jaffna",
+    "category": "Nature • History",
+    "description": "An island southwest of the Jaffna Peninsula, also known as Neduntivu.",
+    "latitude": 9.5133,
+    "longitude": 79.6894
+  },
+  {
+    "name": "Kayts",
+    "aliases": ["Kytes", "Kayts Town", "Urkavalthurai"],
+    "location": "Velanai Island",
+    "district": "Jaffna",
+    "category": "Culture • History",
+    "description": "A coastal town on Velanai Island west of the Jaffna Peninsula.",
+    "latitude": 9.6923,
+    "longitude": 79.8673
+  },
+  {
+    "name": "Point Pedro Jetty",
+    "aliases": ["Jetty Point Pedro", "Jetty Pointpedro", "Point Pedro Wharf"],
+    "location": "Point Pedro",
+    "district": "Jaffna",
+    "category": "History • Coastal landmark",
+    "description": "A historic wharf on the northern coast at Point Pedro.",
+    "latitude": 9.828,
+    "longitude": 80.2353
+  },
+  {
+    "name": "Elephant Pass",
+    "aliases": ["Aanaiyiravu", "Anaiyiravu", "Alimankada"],
+    "location": "Gateway to the Jaffna Peninsula",
+    "district": "Kilinochchi",
+    "category": "History",
+    "description": "The narrow land passage connecting the Jaffna Peninsula to mainland Sri Lanka.",
+    "latitude": 9.506,
+    "longitude": 80.4067
+  },
+  {
+    "name": "Sangupiddy Bridge",
+    "aliases": ["Sangupiddi Bridge", "Changkupiddy Bridge"],
+    "location": "Jaffna Lagoon near Pooneryn",
+    "district": "Kilinochchi",
+    "category": "Nature • Scenic landmark",
+    "description": "A road bridge across Jaffna Lagoon linking the peninsula and the mainland along the A32.",
+    "latitude": 9.566,
+    "longitude": 80.198
+  }
+]

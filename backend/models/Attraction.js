@@ -1,9 +1,15 @@
 const mongoose = require('mongoose');
 
 const attractionSchema = new mongoose.Schema({
+  archived: { type: Boolean, default: false },
+  regionalSeedKey: { type: String, select: false },
   name: {
     type: String,
     required: true
+  },
+  aliases: {
+    type: [String],
+    default: undefined
   },
   location: {
     type: String,
@@ -37,10 +43,8 @@ const attractionSchema = new mongoose.Schema({
   estimatedVisitDuration: {
     type: Number
   },
-  entryFee: {
-    type: Number,
-    default: 0
-  },
+  entryFee: { type: Number, min: 0 },
+  freeAdmission: { type: Boolean, default: undefined },
   environment: {
     type: String,
     enum: ['Indoor', 'Outdoor', 'Both']

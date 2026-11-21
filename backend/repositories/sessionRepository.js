@@ -1,17 +1,18 @@
 const Session = require('../models/Session');
+const users = require('./userRepository');
 
-function create(tokenHash, userId, expiresAt) {
-  return Session.create({ tokenHash, user: userId, expiresAt });
+function create(tokenHash, userId, expiresAt, passwordResetAt) {
+  return Session.create({ tokenHash, user: userId, expiresAt, passwordResetAt });
 }
 
 async function findActiveUser(tokenHash, now) {
   const session = await Session.findOne({
     tokenHash,
     expiresAt: { $gt: now },
-  }).populate('user', 'email').exec();
+  }).populate('user', 'email fullName phoneNumber +passwordResetAt').exec();
   if (!session?.user) return null;
-  const { id, email } = session.user;
-  return { id, email };
+  if (session.passwordResetAt?.getTime() !== session.user.passwordResetAt?.getTime()) return null;
+  return users.profile(session.user);
 }
 
 function revoke(tokenHash) {
